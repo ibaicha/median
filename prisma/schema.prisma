@@ -1,0 +1,325 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+
+model User {
+  id    Int    @id @default(autoincrement())
+  email     String @unique
+  username String
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  posts Post[] @relation("user_posts")
+  comments Comment[] @relation("user_comments")
+  role      Role?     @relation(fields: [roleId], references: [id])
+  roleId    Int?
+  profile   Profile?
+  //UserPermission UserPermission[] @relation("user_user_permissions")
+  userZones UserZone[] @relation("user_user_zones")
+  userSousZones UserSousZone[] @relation("user_user_sous_zones")
+  userLocalites UserLocalite[] @relation("user_user_localites")
+  userPointCollectes UserPointCollecte[] @relation("user_user_point_collectes")
+  userVillages UserVillage[] @relation("user_user_villages")
+  userOps UserOp[] @relation("user_user_ops")
+}
+
+model Role {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  users     User[]
+}
+
+model Profile {
+  id        Int      @id @default(autoincrement())
+  firstName String
+  lastName  String
+  adress   String
+  userId    Int? @unique
+  user User? @relation(fields: [userId], references: [id])
+}
+
+model Post {
+  id Int    @id @default(autoincrement())
+  title String
+  body  String
+  userId Int
+  user User @relation("user_posts", fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  comments Comment[] @relation("post_comments")
+}
+
+model Comment {
+  id Int    @id @default(autoincrement())
+  content String
+  postId Int
+  userId Int
+  post Post @relation("post_comments", fields: [postId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  user User @relation("user_comments", fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+}
+
+model Pays {
+  id    Int    @id @default(autoincrement())
+  name     String @unique
+  sigle String?
+  zones Zone[] @relation("pays_zones")
+  regions Region[] @relation("pays_regions")
+}
+model Zone {
+  id Int    @id @default(autoincrement())
+  name    String
+  paysId Int
+  pays Pays @relation("pays_zones", fields: [paysId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  sousZones SousZone[] @relation("zone_sous_zones")
+
+  //userPermissions UserPermission[] @relation("zone_user_permissions")
+  UserZones UserZone[] @relation("zone_user_zones")
+}
+
+model SousZone {
+  id Int    @id @default(autoincrement())
+  name    String
+  zoneId Int
+  zones Zone @relation("zone_sous_zones", fields: [zoneId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  localites Localite[] @relation("sous_zone_localites")
+
+  //userPermissions UserPermission[] @relation("sous_zone_user_permissions")
+  UserSousZones UserSousZone[] @relation("sous_zone_user_sous_zones")
+}
+
+model Localite {
+  id Int    @id @default(autoincrement())
+  name    String
+  sousZoneId Int
+  sousZone SousZone @relation("sous_zone_localites", fields: [sousZoneId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  villages Village[] @relation("localite_villages")
+
+  pointCollectes PointCollecte[] @relation("localite_point_collectes")
+
+  //userPermissions UserPermission[] @relation("localite_user_permissions")
+  UserLocalites UserLocalite[] @relation("localite_user_localites")
+
+}
+
+model Region {
+  id Int    @id @default(autoincrement())
+  name    String
+  paysId Int
+  pays Pays @relation("pays_regions", fields: [paysId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  departements Departement[] @relation("region_departements")
+}
+
+model Departement {
+  id Int    @id @default(autoincrement())
+  name    String
+  regionId Int
+  regions Region @relation("region_departements", fields: [regionId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  communes Commune[] @relation("departement_communes")
+  
+}
+
+model Commune {
+  id Int    @id @default(autoincrement())
+  name    String
+  departementId Int
+  departement Departement @relation("departement_communes", fields: [departementId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  villages Village[] @relation("commune_villages") 
+}
+
+model Village {
+  id Int    @id @default(autoincrement())
+  name    String
+ communeId Int
+ commune Commune @relation("commune_villages", fields: [communeId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+ localiteId Int
+ localite Localite @relation("localite_villages", fields: [localiteId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+ //userPermissions UserPermission[] @relation("village_user_permissions")
+ UserVillages UserVillage[] @relation("village_user_villages")
+}
+
+model TypeOp {
+  id    Int    @id @default(autoincrement())
+  name     String @unique
+  ops    Op[] @relation("type_op_ops")
+}
+
+model PointCollecte {
+  id Int    @id @default(autoincrement())
+  name    String
+  localiteId Int
+  localite Localite @relation("localite_point_collectes", fields: [localiteId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  
+  ops    Op[] @relation("point_collecte_ops")
+  userPointCollectes UserPointCollecte[] @relation("point_collecte_user_point_collectes")
+}
+
+model Op {
+  id Int    @id @default(autoincrement())
+  name    String
+  typeOpId Int
+  typeOp TypeOp @relation("type_op_ops", fields: [typeOpId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  producteurs Producteur[] @relation("op_producteurs")
+
+  pointCollecteId Int
+  pointCollecte PointCollecte @relation("point_collecte_ops", fields: [pointCollecteId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+  //userPermissions UserPermission[] @relation("op_user_permissions")
+  UserOps UserOp[] @relation("op_user_ops")
+}
+
+model Producteur {
+  id Int    @id @default(autoincrement())
+  compte    String @unique
+  prenom    String
+  nom    String
+  cni    String
+  email    String
+  telephone    String
+  adresse    String
+  isActive    Boolean
+  opId Int
+  op Op @relation("op_producteurs", fields: [opId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  exploitations Exploitation[] @relation("producteur_exploitations")
+
+}
+
+model Annee {
+  id    Int    @id @default(autoincrement())
+  name     String 
+  description     String 
+  exploitations Exploitation[] @relation("annee_exploitations")
+}
+
+model Saison {
+  id    Int    @id @default(autoincrement())
+  value     Int @unique
+  name     String @unique
+  exploitations Exploitation[] @relation("saisons_exploitations")
+}
+model Filiere {
+  id    Int    @id @default(autoincrement())
+  name     String 
+  produits Produit[] @relation("filiere_produits")
+}
+model Produit {
+  id Int    @id @default(autoincrement())
+  name    String
+  isDerive Boolean
+  isEnsachage Boolean
+  isActive Boolean
+  filiereId Int
+  filiere Filiere @relation("filiere_produits", fields: [filiereId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  varietes Variete[] @relation("produit_varietes")
+}
+
+model Variete {
+  id Int    @id @default(autoincrement())
+  name    String
+  surface_unite String
+  quantite_unite String
+  rendement_unite String
+  isActive Boolean
+  produitId Int
+  produit Produit @relation("produit_varietes", fields: [produitId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  exploitations Exploitation[] @relation("variete_exploitations")
+
+}
+
+
+model TypeChargeExploitation {
+  id    Int    @id @default(autoincrement())
+  name     String @unique
+  chargeExploitations ChargeExploitation[] @relation("type_charge_exploitation_charge_exploitations")
+}
+
+model FamilleChargeExploitation {
+  id    Int    @id @default(autoincrement())
+  name     String @unique
+  chargeExploitations ChargeExploitation[] @relation("famille_charge_exploitation_charge_exploitations")
+}
+
+model ChargeExploitation {
+  id    Int    @id @default(autoincrement())
+  name     String
+  unite     String
+  pu     Float
+  quantite_unite_superficie     Float
+  isAchat     Boolean
+  typeChargeExploitationId Int
+  typeChargeExploitation TypeChargeExploitation @relation("type_charge_exploitation_charge_exploitations", fields: [typeChargeExploitationId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  familleChargeExploitationId Int
+  familleChargeExploitation FamilleChargeExploitation @relation("famille_charge_exploitation_charge_exploitations", fields: [familleChargeExploitationId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+}
+
+model Exploitation {
+  id    Int    @id @default(autoincrement())
+  name     String
+  unite     String
+  pu     Float
+  surface     Float
+  production     Float
+  isAchat     Boolean
+  varieteId Int
+  variete Variete @relation("variete_exploitations", fields: [varieteId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  anneeId Int
+  annee Annee @relation("annee_exploitations", fields: [anneeId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  saisonId Int
+  saison Saison @relation("saisons_exploitations", fields: [saisonId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  producteurId Int
+  producteur Producteur @relation("producteur_exploitations", fields: [producteurId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+}
+
+
+
+
+model UserZone {
+  id    Int    @id @default(autoincrement())
+  userId Int
+  user User @relation("user_user_zones", fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  zoneId Int
+  zone Zone @relation("zone_user_zones", fields: [zoneId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+ }
+model UserSousZone {
+  id    Int    @id @default(autoincrement())
+  userId Int
+  user User @relation("user_user_sous_zones", fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  sousZoneId Int
+  sousZone SousZone @relation("sous_zone_user_sous_zones", fields: [sousZoneId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  }
+model UserLocalite {
+  id    Int    @id @default(autoincrement())
+  userId Int
+  user User @relation("user_user_localites", fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  localiteId Int
+  localite Localite @relation("localite_user_localites", fields: [localiteId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+}
+model UserVillage {
+  id    Int    @id @default(autoincrement())
+  userId Int
+  user User @relation("user_user_villages", fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  villageId Int
+  village Village @relation("village_user_villages", fields: [villageId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+}
+model UserPointCollecte {
+  id    Int    @id @default(autoincrement())
+  userId Int
+  user User @relation("user_user_point_collectes", fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  pointCollecteId Int
+  pointCollecte PointCollecte @relation("point_collecte_user_point_collectes", fields: [pointCollecteId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+}
+model UserOp {
+  id    Int    @id @default(autoincrement())
+  userId Int
+  user User @relation("user_user_ops", fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  opId Int
+  op Op @relation("op_user_ops", fields: [opId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+}
